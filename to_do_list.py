@@ -83,11 +83,23 @@ def login():
         flash("로그인 실패! 아이디 또는 비밀번호를 확인하세요.")
     return render_template("login.html")
 
-# 대시보드
+# 대시보드 페이지
 @app.route("/dashboard/<user_id>")
 def dashboard(user_id):
-    tasks = [task for task in load_task_data() if task[0] == user_id]
-    return render_template("dashboard.html", user_id=user_id, tasks=tasks)
+    tasks = load_task_data()
+
+    # 작업 상태별로 작업 분리
+    tasks_해야할일 = [task for task in tasks if task[0] == user_id and task[5] == "해야 할 일"]
+    tasks_진행중 = [task for task in tasks if task[0] == user_id and task[5] == "진행 중"]
+    tasks_완료 = [task for task in tasks if task[0] == user_id and task[5] == "완료"]
+
+    return render_template(
+        "dashboard.html",
+        user_id=user_id,
+        tasks_해야할일=tasks_해야할일,
+        tasks_진행중=tasks_진행중,
+        tasks_완료=tasks_완료
+    )
 
 # 작업 추가
 @app.route("/add_task/<user_id>", methods=["GET", "POST"])
@@ -132,31 +144,5 @@ def view_tasks(user_id, status):
     tasks = [task for task in load_task_data() if task[0] == user_id and task[5] == status]
     return render_template("view_tasks.html", user_id=user_id, tasks=tasks, status=status)
 
-@app.route("/edit_task/<user_id>/<task_name>", methods=["GET", "POST"])
-def edit_task(user_id, task_name):
-    # 모든 작업 데이터 로드
-    tasks = load_task_data()
-    task_to_edit = None
-
-    # 수정할 작업 찾기
-    for task in tasks:
-        if task[0] == user_id and task[1] == task_name:
-            task_to_edit = task
-            break
-
-    if not task_to_edit:
-        flash("수정할 작업을 찾을 수 없습니다.")
-        return redirect(url_for("dashboard", user_id=user_id))
-
-    if request.method == "POST":
-        # 작업 설명과 상태 업데이트
-        task_to_edit[2] = request.form["task_description"]  # 설명 업데이트
-        task_to_edit[5] = request.form["status"]  # 상태 업데이트
-        overwrite_task_data(tasks)  # 수정된 데이터를 파일에 저장
-        flash("작업이 수정되었습니다.")
-        return redirect(url_for("dashboard", user_id=user_id))
-
-    return render_template("edit_task.html", user_id=user_id, task=task_to_edit)
-
 if __name__ == "__main__":
-    app.run(host = "0.0.0.0", port = 5500)
+    app.run(host="0.0.0.0", port=5500)
