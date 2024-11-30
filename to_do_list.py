@@ -138,6 +138,17 @@ def edit_task(user_id, task_name):
 
     return render_template("edit_task.html", user_id=user_id, task=task_to_edit)
 
+# 작업 삭제
+@app.route("/delete_task/<user_id>/<task_name>", methods=["POST"])
+def delete_task(user_id, task_name):
+    tasks = load_task_data()
+    updated_tasks = [task for task in tasks if not (task[0] == user_id and task[1] == task_name)]
+
+    # 파일에 삭제된 데이터 저장
+    overwrite_task_data(updated_tasks)
+    flash(f"'{task_name}' 작업이 삭제되었습니다.")
+    return redirect(url_for("dashboard", user_id=user_id))
+
 # 상태별 작업 보기
 @app.route("/view_tasks/<user_id>/<status>")
 def view_tasks(user_id, status):
